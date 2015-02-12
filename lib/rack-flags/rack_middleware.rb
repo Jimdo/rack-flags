@@ -5,6 +5,7 @@ module RackFlags
     def initialize( app, args )
       @app = app
       @disable_config_caching = args.fetch(:disable_config_caching, false)
+      @expose_header = args.fetch(:expose_header, 'X-Labs-Features')
       @yaml_path = args.fetch( :yaml_path ){ raise ArgumentError.new( 'yaml_path must be provided' ) }
     end
 
@@ -13,7 +14,13 @@ module RackFlags
       reader = Reader.new( config.flags, overrides )
       env[ENV_KEY] = reader
 
-      @app.call(env)
+      status, headers, body = @app.call(env)
+
+      reader.base_flags.keys.map do |flag_name|
+        headers[@expose_header] = "#{flag_name}: #{reader.on?(flag_name)}" unless @expose_header == false
+      end
+
+      [status, headers, body]
     end
 
     private
