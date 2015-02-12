@@ -16,9 +16,10 @@ module RackFlags
 
       status, headers, body = @app.call(env)
 
-      reader.base_flags.keys.map do |flag_name|
-        headers[@expose_header] = "#{flag_name}: #{reader.on?(flag_name)}" unless @expose_header == false
+      flags_parts = reader.base_flags.keys.collect do |flag_name|
+        "#{flag_name}=#{reader.on?(flag_name)}"
       end
+      headers[@expose_header] = flags_parts.join('; ') unless @expose_header == false
 
       [status, headers, body]
     end
