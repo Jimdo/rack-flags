@@ -15,7 +15,7 @@ describe 'reading feature flags in an app' do
   let( :app ) do
     yaml_path = ff_config_file_path
     Rack::Builder.new do
-      use RackFlags::RackMiddleware, yaml_path: yaml_path
+      use RackFlags::RackMiddleware, yaml_path: yaml_path, expose_header: true
       run ReaderApp
     end
   end
@@ -37,6 +37,12 @@ describe 'reading feature flags in an app' do
     it 'should interpret foo as on and bar as off' do
       get '/'
       expect(last_response.body).to eql 'foo is on; bar is off'
+    end
+
+    it 'should expose the active flags in http header' do
+      get '/'
+      expect(last_response.headers).to have_key('X-Labs-Features')
+      expect(last_response.headers['X-Labs-Features']).to include('foo')
     end
   end
 
