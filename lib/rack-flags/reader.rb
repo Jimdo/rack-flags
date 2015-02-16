@@ -30,6 +30,10 @@ module RackFlags
       end
     end
 
+    def active_flags
+      @base_flags.values.select { |flag| self.on? flag.name }
+    end
+
     def on?(flag_name)
       flag_name = flag_name.to_sym
 
