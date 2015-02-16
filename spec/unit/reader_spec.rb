@@ -62,6 +62,16 @@ module RackFlags
 
         expect(overrides).to eq([nil, nil])
       end
+
+      it 'has only defaults active' do
+        active_flags = subject.active_flags
+
+        expect(active_flags.length).to eq(1)
+
+        expect(active_flags[0].name).to eq(:usually_on)
+        expect(active_flags[0].description).to eq('a flag')
+        expect(active_flags[0].default).to be_truthy
+      end
     end
 
     context 'overridden to false' do
@@ -78,6 +88,12 @@ module RackFlags
 
         expect(overrides).to eq([false, nil])
       end
+
+      it 'has no active falgs' do
+        active_flags = subject.active_flags
+
+        expect(active_flags.length).to eq(0)
+      end
     end
 
     context 'overridding a flag which has no base' do
@@ -93,6 +109,16 @@ module RackFlags
         overrides = full_flags_overrides(subject.full_flags)
 
         expect(overrides).to eq([nil, nil])
+      end
+
+      it 'returns only active defaults as active flags' do
+        active_flags = subject.active_flags
+
+        expect(active_flags.length).to eq(1)
+
+        expect(active_flags[0].name).to eq(:usually_on)
+        expect(active_flags[0].description).to eq('a flag')
+        expect(active_flags[0].default).to be_truthy
       end
     end
   end
