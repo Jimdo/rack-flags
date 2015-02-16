@@ -35,7 +35,6 @@ module RackFlags
         expect(full_flags[1].description).to eq('another flag')
         expect(full_flags[1].default).to be_falsey
       end
-
     end
 
     context 'no overrides' do

@@ -12,6 +12,12 @@ module RackFlags
       RackMiddleware.new( fake_app, args )
     end
 
+    let( :base_flags ) do
+      [
+        BaseFlag.new( :usually_on, 'a flag', true )
+      ]
+    end
+
     it 'raise an exception if no yaml path is provided' do
       expect {
         RackMiddleware.new( :fake_app, {} )
@@ -92,7 +98,63 @@ module RackFlags
         middleware = create_middleware( fake_app )
         middleware_response = middleware.call( {} )
 
-        expect(middleware_response).to eq 'downstream app response'
+        expect(middleware_response).to eq ["downstream app response", nil, nil]
+      end
+
+      it 'add the X-Labs-Features header' do
+        mock_out_config_loading
+
+        fake_app ||= Proc.new do
+          ['downstream app response', {} ]
+        end
+
+        middleware = create_middleware( fake_app, expose_header: true )
+        middleware_response, headers = middleware.call( {} )
+
+        expect(headers).to have_key('X-Labs-Features')
+      end
+
+      it 'adds all actiuve flag names to the X-Labs-Features header' do
+        mock_out_config_loading
+
+        fake_app ||= Proc.new do
+          ['downstream app response', {} ]
+        end
+
+        any_instance_of(Reader) do |klass|
+          stub(klass).active_flags { base_flags }
+        end
+
+        middleware = create_middleware( fake_app, expose_header: true )
+        middleware_response, headers = middleware.call( {} )
+
+        expect(headers['X-Labs-Features']).to include('usually_on')
+      end
+
+      it 'add the #{expose_header} header when expose_header config is present' do
+        mock_out_config_loading
+
+        fake_app ||= Proc.new do
+          ['downstream app response', {} ]
+        end
+
+        middleware = create_middleware( fake_app, expose_header: 'XXX-Another-Feature-Flag-Header' )
+        middleware_response, headers = middleware.call( {} )
+
+        expect(headers).to have_key('XXX-Another-Feature-Flag-Header')
+      end
+
+      it 'does not add the X-Labs-Features when disabled' do
+        mock_out_config_loading
+
+        fake_app ||= Proc.new do
+          ['downstream app response', {} ]
+        end
+
+        middleware = create_middleware( fake_app, expose_header: false )
+        middleware_response, headers = middleware.call( {} )
+
+        expect(headers).not_to have_key('X-Labs-Features')
       end
     end
   end
